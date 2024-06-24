@@ -1,7 +1,5 @@
 package theo32machine;
 
-import UI.MemoryInterface;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -280,7 +278,7 @@ public class THEO32 extends Thread {
         }
     }
 
-    public THEO32(String ROMLocation, String BootLocation,int COMport,int ClockHz, boolean BasicUIEnabled) throws Exception {
+    public THEO32(String ROMLocation, String BootLocation,int COMport,int ClockHz) throws Exception {
         this.COMport = COMport;
         this.ClockHz = ClockHz;
 
@@ -296,6 +294,8 @@ public class THEO32 extends Thread {
         AY8910.SerialReader serialReader = new AY8910.SerialReader();
         serialReader.start();
 
+        ps2keyboard = new ps2Keyboard();
+
 
         try {
             Thread.sleep(1000);
@@ -303,11 +303,8 @@ public class THEO32 extends Thread {
             e.printStackTrace();
         }
         ay.start();
-        if (BasicUIEnabled) {
-            ps2keyboard = new ps2Keyboard();
-            RamInfoTable.createAndShowGUI();
-        }
 
+        RamInfoTable.createAndShowGUI();
     }
     long prevNanoSeconds = 0;
     long prevNanoSecondsUpdate = 0;
@@ -322,8 +319,6 @@ public class THEO32 extends Thread {
             if (System.nanoTime()>=prevNanoSecondsUpdate+100_000_000L) {
                 long NanoSeconds = System.nanoTime();
                 RamInfoTable.updateTableData(RAM);
-
-                MemoryInterface.updateTableData(RAM);
                 prevNanoSecondsUpdate = NanoSeconds;
             }
         }

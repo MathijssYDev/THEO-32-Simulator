@@ -6,28 +6,21 @@ import com.fazecast.jSerialComm.SerialPort;
 public class AY8910 extends Thread {
     THEO32 cpu;
     static SerialPort comPort;
-    boolean enabled = true;
 
     public AY8910(THEO32 cpu) {
         this.cpu = cpu;
-        try {
-            // Initialize serial port
 
-            comPort = SerialPort.getCommPorts()[cpu.COMport];
-            comPort.setComPortParameters(115200, 8, 1, 0);
-            comPort.setComPortTimeouts(SerialPort.TIMEOUT_SCANNER, 0, 0);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> comPort.closePort()));
 
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> comPort.closePort()));
+        // Initialize serial port
+        comPort = SerialPort.getCommPorts()[cpu.COMport];
+        comPort.setComPortParameters(115200, 8, 1, 0);
+        comPort.setComPortTimeouts(SerialPort.TIMEOUT_SCANNER, 0, 0);
 
-            if (comPort.openPort()) {
-                System.out.println("Port is open.");
-            } else {
-                System.out.println("Failed to open port.");
-            }
-        } catch (Exception e) {
-            enabled = false;
-
-            System.err.println("Error occurred while trying to start comport");
+        if (comPort.openPort()) {
+            System.out.println("Port is open.");
+        } else {
+            System.out.println("Failed to open port.");
         }
     }
 
@@ -91,8 +84,7 @@ public class AY8910 extends Thread {
 
         public void run() {
             byte[] readBuffer = new byte[1024];
-            while (comPort != null) {
-
+            while (true) {
                 int numBytes = comPort.readBytes(readBuffer, readBuffer.length);
                 if (numBytes > 0) {
                     synchronized (buffer) {

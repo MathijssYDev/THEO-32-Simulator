@@ -47,7 +47,6 @@ public class RamInfoTable {
     }
 
     public static void updateTableData(byte[] newData) {
-        if (tableModel == null) return;
         if (newData.length != ramData.length) {
             System.err.println("Error: Size of newData array must match the size of ramData array.");
             return;
