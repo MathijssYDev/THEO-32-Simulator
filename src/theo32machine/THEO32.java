@@ -1,6 +1,9 @@
 package theo32machine;
 
 import UI.MemoryInterface;
+import UI.TMS9918.Display;
+import UI.TMS9918.TMS9918;
+import UI.TMS9918.TMS9918_Helper;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -33,6 +36,9 @@ public class THEO32 extends Thread {
 
     // ################### DEVICES ###################
     AY8910 ay;
+    public TMS9918 tms9918Device = new TMS9918();
+    public TMS9918_Helper tms9918 = new TMS9918_Helper();
+    public Display display = new Display(tms9918Device);
 
     // ################### REQUESTS ###################
     public CopyOnWriteArrayList<Integer[]> AY8910_Requests = new CopyOnWriteArrayList<Integer[]>();
@@ -343,7 +349,7 @@ public class THEO32 extends Thread {
     }
 
     public int readByte(int Instruction, int byteLocation, boolean Command) {
-        int response = DeviceRequestCheck(byteLocation,-1);
+        int response = DeviceRequestCheck(byteLocation,-1, false);
         if (response != -1) return response;
 
         Instruction = Instruction&0xFF;
@@ -363,7 +369,7 @@ public class THEO32 extends Thread {
         }
     }
     public void writeByte(int Instruction, int byteLocation, boolean Command, int value) throws Exception {
-        int response = DeviceRequestCheck(byteLocation,value);
+        int response = DeviceRequestCheck(byteLocation,value, true);
 
         Instruction = Instruction&0xFF;
         try {
@@ -391,7 +397,7 @@ public class THEO32 extends Thread {
             return;
         }
     }
-    private int DeviceRequestCheck(int byteLocation, int value) {
+    private int DeviceRequestCheck(int byteLocation, int value, boolean write) {
         if (byteLocation < 0x8000) return -1;
 
         if (byteLocation >= 0x8080 && byteLocation <= 0x8380) {
@@ -413,6 +419,15 @@ public class THEO32 extends Thread {
 
             Integer[] command = new Integer[]{BC1 ? 1 : 0, BDIR ? 1 : 0, value};
             AY8910_Requests.add(command);
+        }
+        if (byteLocation == 0x8400 || byteLocation == 0x8600) {
+            tms9918.setMode(byteLocation == 0x8600);
+            if (write) {
+                tms9918.writeByte(tms9918Device,(byte)value);
+            } else {
+                return tms9918.readByte(tms9918Device,(byte)value);
+            }
+
         }
         if (byteLocation >= 0xA100 && byteLocation <= 0xA400) {
             switch (byteLocation) {
